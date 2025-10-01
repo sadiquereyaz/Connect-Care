@@ -44,7 +44,8 @@ import com.reyaz.connectcare.ui.screens.home.components.ParameterCardItem
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    onAuthClick: () -> Unit
+    onAuthClick: () -> Unit,
+    onStartCalling: () -> Unit
 ) {
     Scaffold(
         modifier = modifier,
@@ -77,7 +78,7 @@ fun HomeScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = {}
+                onClick = onStartCalling
             ) {
                 Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
                     AsyncImage(
@@ -170,6 +171,7 @@ fun HomeScreen(
 @Composable
 private fun HomeScreenPreview() {
     HomeScreen(
-        onAuthClick = {}
+        onAuthClick = {},
+        onStartCalling = {}
     )
 }

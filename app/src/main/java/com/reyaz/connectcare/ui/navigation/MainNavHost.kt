@@ -19,6 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import com.reyaz.connectcare.ui.screens.home.HomeScreen
+import com.reyaz.connectcare.ui.screens.video_call.AgoraVideoScreen
 
 @Composable
 fun MainNavHost(
@@ -28,6 +29,7 @@ fun MainNavHost(
 
     NavHost(
         navController = navController,
+//        startDestination = NavigationRoute.VideoCall.route,
         startDestination = NavigationRoute.Home.route,
 //        startDestination =  NavigationRoute.Authentication.route,
         modifier = modifier,
@@ -63,8 +65,15 @@ fun MainNavHost(
             route = NavigationRoute.Home.route
         ) {
             HomeScreen(
-                onAuthClick = { navController.navigate(NavigationRoute.Authentication.route) }
+                onAuthClick = { navController.navigate(NavigationRoute.Authentication.route) },
+                onStartCalling = { navController.navigate(NavigationRoute.VideoCall.route) }
             )
+        }
+
+        composable(
+            route = NavigationRoute.VideoCall.route
+        ) {
+            AgoraVideoScreen()
         }
 
     }

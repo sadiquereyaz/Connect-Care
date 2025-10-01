@@ -77,4 +77,7 @@ dependencies {
     implementation(libs.koin.androidx.workmanager)
 
     implementation(libs.coil.compose)
+
+    implementation("io.agora.rtc:full-sdk:4.3.1")
+
 }
