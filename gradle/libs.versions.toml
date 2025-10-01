@@ -1,5 +1,6 @@
 [versions]
 agp = "8.12.3"
+coilCompose = "2.7.0"
 kotlin = "2.0.21"
 coreKtx = "1.17.0"
 junit = "4.13.2"
@@ -9,8 +10,22 @@ lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.11.0"
 composeBom = "2024.09.00"
 
+# Koin - Lightweight dependency injection framework
+# koinAndroidxWorkmanager: Integrates Koin with AndroidX WorkManager, allowing dependency injection
+# into your WorkManager Workers.
+koinAndroidxWorkmanager = "4.0.2"
+# koin-bom: Koin's Bill of Materials (BoM) to manage consistent versions of all Koin libraries.
+# Recommended for ensuring compatibility across different Koin modules.
+koin-bom = "4.0.2"
+
+# AndroidX Work - Background task scheduling and execution
+# WorkManager for reliable background task execution. It handles device constraints,
+# guarantees execution, and manages retries for deferrable tasks.
+workRuntimeKtx = "2.10.0"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -24,6 +39,52 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+# DEPENDENCY INJECTION - KOIN FRAMEWORK
+# Bill of Materials for Koin dependency injection framework
+# Manages all Koin library versions consistently to prevent conflicts and ensure compatibility.
+koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
+
+# Core Koin dependency injection functionality
+# Provides the fundamental APIs for defining Koin modules, providing dependencies, and resolving them.
+koin-core = { module = "io.insert-koin:koin-core" }
+
+# Android-specific extensions and integrations for Koin
+# Includes Android context injection, lifecycle integration, and Android-specific utilities
+koin-android = { module = "io.insert-koin:koin-android" }
+
+# Jetpack Compose integration for Koin dependency injection
+# Provides composable functions like `koinViewModel()` and `koinInject()` for dependency retrieval
+# and ViewModel integration directly within Compose UI.
+koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose" }
+
+# Navigation integration between Koin and Jetpack Compose Navigation
+# Enables dependency injection in navigation destinations and shared ViewModels across navigation graphs.
+koin-androidx-compose-navigation = { module = "io.insert-koin:koin-androidx-compose-navigation" }
+
+# WorkManager integration with Koin for dependency injection in background workers
+# Allows injecting dependencies into `Worker` classes for robust background task execution.
+koin-androidx-workmanager = { module = "io.insert-koin:koin-androidx-workmanager" }
+
+# Coroutines support for Koin dependency injection
+# Enables asynchronous dependency creation and injection within coroutine contexts,
+# useful for providing dependencies that require suspending operations.
+koin-core-coroutines = { module = "io.insert-koin:koin-core-coroutines" }
+
+# ARCHITECTURE COMPONENTS - LIFECYCLE & VIEWMODEL
+# Integrates Android ViewModels with Jetpack Compose, enabling state management and lifecycle awareness
+# Critical for MVVM architecture pattern in Compose applications
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx" }
+
+# NAVIGATION
+# Type-safe navigation component specifically designed for Jetpack Compose
+# Handles screen transitions, deep links, and navigation state management
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "lifecycleRuntimeKtx" }
+
+# BACKGROUND PROCESSING
+# WorkManager for reliable background task execution with constraints and scheduling
+# Perfect for data sync, periodic tasks, and deferrable work that must complete
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
