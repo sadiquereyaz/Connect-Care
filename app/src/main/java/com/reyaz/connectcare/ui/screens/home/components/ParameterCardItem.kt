@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -42,8 +43,7 @@ fun ParameterCardItem(
     color: Color = Color(0xFF58B05C)
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = modifier.height(150.dp),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(
@@ -52,7 +52,7 @@ fun ParameterCardItem(
             Row(
                 modifier = Modifier,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
                 Icon(
                     imageVector = Icons.Outlined.FavoriteBorder,
@@ -64,7 +64,7 @@ fun ParameterCardItem(
                         .background(color = color.copy(alpha = 0.2f))
                         .padding(2.dp)
                 )
-                Text(text = name, style = MaterialTheme.typography.titleMedium)
+                Text(text = name, style = MaterialTheme.typography.titleMedium, maxLines = 2)
             }
             Spacer(Modifier.height(4.dp))
             Row(
@@ -74,7 +74,7 @@ fun ParameterCardItem(
                 Text(
                     text = value,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 28.sp,
+                    fontSize = 50.sp,
 
                     )
                 Text(

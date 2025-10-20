@@ -44,4 +44,10 @@ class ScanViewModel(
             }
         }
     }
+
+    fun stopScanning() {
+        viewModelScope.launch {
+            bleManager.stopScan()
+        }
+    }
 }

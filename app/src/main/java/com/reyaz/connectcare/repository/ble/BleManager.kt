@@ -19,9 +19,14 @@ class BleManager(private val context: Context) {
     private var gatt: BluetoothGatt? = null
     private val handler = Handler(Looper.getMainLooper())
 
+    /**
+     * A UUID (Universally Unique Identifier) in BLE identifies a specific service or characteristic provided by a BLE device.
+     *
+     * Think of it like an address or ID that tells your Android app what kind of data or capability the ESP32 is offering.
+     */
     private val heartRateServiceUuid = UUID.fromString("0000180D-0000-1000-8000-00805f9b34fb")
     private val heartRateCharUuid = UUID.fromString("00002A37-0000-1000-8000-00805f9b34fb")
-    private val cccdUuid = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
+    private val cccdUuid = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")  // Client Characteristics Configured UUID
 
     private var isScanning = false
     private var currentScanCallback: ScanCallback? = null

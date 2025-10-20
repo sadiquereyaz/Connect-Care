@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -111,15 +113,43 @@ fun HomeScreen(
                     Text(text = "Start Scan")
                 }
             }
-            items(
-                count = 4
-            ) {
-                ParameterCardItem(
-                    name = "Heart Rate",
-                    value = uiState.heartRate?.toString() ?: "--",
-                    unit = "bpm",
-                    icon = 0
-                )
+            item {
+                Row(
+                ) {
+                    ParameterCardItem(
+                        modifier = Modifier.weight(1f),
+                        name = "Heart Rate",
+                        value = uiState.heartRate?.toString() ?: "--",
+                        unit = "bpm",
+                        icon = 0
+                    )
+                    Spacer(Modifier.width(16.dp))
+                    ParameterCardItem(
+                        modifier = Modifier.weight(1f),
+                        name = "Body Temperature",
+                        value = uiState.heartRate?.toString() ?: "--",
+                        unit = "bpm",
+                        icon = 0
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                Row() {
+                    ParameterCardItem(
+                        modifier = Modifier.weight(1f),
+                        name = "SpO2",
+                        value = uiState.heartRate?.toString() ?: "--",
+                        unit = "bpm",
+                        icon = 0
+                    )
+                    Spacer(Modifier.width(16.dp))
+                    ParameterCardItem(
+                        modifier = Modifier.weight(1f),
+                        name = "ECG",
+                        value = uiState.heartRate?.toString() ?: "--",
+                        unit = "bpm",
+                        icon = 0
+                    )
+                }
             }
 
             item {
