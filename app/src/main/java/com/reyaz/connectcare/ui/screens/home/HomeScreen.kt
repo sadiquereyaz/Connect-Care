@@ -23,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -44,8 +45,10 @@ import com.reyaz.connectcare.ui.screens.home.components.ParameterCardItem
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
+    uiState: HomeUiState,
     onAuthClick: () -> Unit,
-    onStartCalling: () -> Unit
+    onStartCalling: () -> Unit,
+    onStartScanClick: () -> Unit,
 ) {
     Scaffold(
         modifier = modifier,
@@ -82,7 +85,7 @@ fun HomeScreen(
             ) {
                 Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
                     AsyncImage(
-                        model = Icon( Icons.Default.Call, null),
+                        model = Icon(Icons.Default.Call, null),
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxSize()
@@ -100,12 +103,20 @@ fun HomeScreen(
                 .padding(16.dp)
                 .fillMaxSize()
         ) {
+            item {
+                OutlinedButton(
+                    onClick = onStartScanClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "Start Scan")
+                }
+            }
             items(
                 count = 4
             ) {
                 ParameterCardItem(
                     name = "Heart Rate",
-                    value = "72",
+                    value = uiState.heartRate?.toString() ?: "--",
                     unit = "bpm",
                     icon = 0
                 )
@@ -113,7 +124,7 @@ fun HomeScreen(
 
             item {
                 Spacer(modifier = Modifier.height(4.dp))
-                 Card(
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .border(
@@ -122,44 +133,44 @@ fun HomeScreen(
                             shape = RoundedCornerShape(16.dp)
                         )
                 ) {
-                     Column(
-                         modifier = Modifier.fillMaxSize().padding(16.dp),
-                         verticalArrangement = Arrangement.spacedBy(8.dp)
-                     ){
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
 
-                         Text(text = "Supported Devices")
+                        Text(text = "Supported Devices")
 
-                         Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(2.dp))
 
-                         ConnectedDeviceItem(
-                             modifier = Modifier,
-                             name = "Galaxy Watch 4",
-                             isConnected = true,
-                             fetchedStatus = "Last Synced: 10:00 AM"
-                         )
-                         ConnectedDeviceItem(
-                             modifier = Modifier,
-                             name = "Galaxy Watch 4",
-                             isConnected = true,
-                             fetchedStatus = "Last Synced: 10:00 AM"
-                         )
-                         ConnectedDeviceItem(
-                             modifier = Modifier,
-                             name = "Galaxy Watch 4",
-                             isConnected = true,
-                             fetchedStatus = "Last Synced: 10:00 AM"
-                         )
-                         ConnectedDeviceItem(
-                             modifier = Modifier,
-                             name = "Galaxy Watch 4",
-                             isConnected = true,
-                             fetchedStatus = "Last Synced: 10:00 AM"
-                         )
-                     }
+                        ConnectedDeviceItem(
+                            modifier = Modifier,
+                            name = "Galaxy Watch 4",
+                            isConnected = true,
+                            fetchedStatus = "Last Synced: 10:00 AM"
+                        )
+                        ConnectedDeviceItem(
+                            modifier = Modifier,
+                            name = "Galaxy Watch 4",
+                            isConnected = true,
+                            fetchedStatus = "Last Synced: 10:00 AM"
+                        )
+                        ConnectedDeviceItem(
+                            modifier = Modifier,
+                            name = "Galaxy Watch 4",
+                            isConnected = true,
+                            fetchedStatus = "Last Synced: 10:00 AM"
+                        )
+                        ConnectedDeviceItem(
+                            modifier = Modifier,
+                            name = "Galaxy Watch 4",
+                            isConnected = true,
+                            fetchedStatus = "Last Synced: 10:00 AM"
+                        )
+                    }
                 }
             }
-
-
             item { Spacer(Modifier.height(100.dp)) }
 
         }
@@ -172,6 +183,8 @@ fun HomeScreen(
 private fun HomeScreenPreview() {
     HomeScreen(
         onAuthClick = {},
-        onStartCalling = {}
+        onStartCalling = {},
+        onStartScanClick = {},
+        uiState = HomeUiState()
     )
 }

@@ -1,25 +1,35 @@
 package com.reyaz.connectcare.ui.navigation
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import com.reyaz.connectcare.ui.screens.home.HomeScreen
+import com.reyaz.connectcare.ui.screens.home.HomeViewModel
+import com.reyaz.connectcare.ui.screens.scan_dialog.ScanDialog
+import com.reyaz.connectcare.ui.screens.scan_dialog.ScanViewModel
 import com.reyaz.connectcare.ui.screens.video_call.AgoraVideoScreen
+import com.reyaz.connectcare.utils.Constants
+import kotlinx.coroutines.flow.collectLatest
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun MainNavHost(
@@ -45,8 +55,7 @@ fun MainNavHost(
                 )
             ) {
                 Surface(
-                    modifier = Modifier
-                    ,shape = RoundedCornerShape(16.dp)
+                    modifier = Modifier, shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(
                         modifier = Modifier
@@ -61,12 +70,51 @@ fun MainNavHost(
             }
         }
 
+        dialog(
+            route = NavigationRoute.ScanDialog.route
+        ) {
+            val viewModel: ScanViewModel = koinViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            ScanDialog(
+                scanUiState = uiState,
+                onDismiss = { navController.popBackStack() },
+                refresh = { viewModel.startScanning() },
+                onConnect = { device ->
+                    val homeEntry = navController.getBackStackEntry(NavigationRoute.Home.route)
+                    homeEntry.savedStateHandle[Constants.SCAN_RESULT_KEY] = device.address
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(
             route = NavigationRoute.Home.route
-        ) {
+        ) { backStackEntry ->
+
+            val selectedMac by backStackEntry
+                .savedStateHandle
+                .getStateFlow<String?>(Constants.SCAN_RESULT_KEY, null)
+                .collectAsStateWithLifecycle()
+
+            val viewModel: HomeViewModel = koinViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            LaunchedEffect(selectedMac) {
+//                Log.d("HomeScreen", "LaunchedEffect triggered with MAC: $selectedMac")
+                if (selectedMac != null) {
+//                    Log.d("HomeScreen", "Connecting to device: $selectedMac")
+                    viewModel.connectToDevice(selectedMac!!)
+                    // Clear the result after using it to avoid re-triggering
+                    backStackEntry.savedStateHandle.remove<String>(Constants.SCAN_RESULT_KEY)
+                }
+            }
             HomeScreen(
+                uiState = uiState,
                 onAuthClick = { navController.navigate(NavigationRoute.Authentication.route) },
-                onStartCalling = { navController.navigate(NavigationRoute.VideoCall.route) }
+                onStartCalling = { navController.navigate(NavigationRoute.VideoCall.route) },
+                onStartScanClick = {
+                    navController.navigate(NavigationRoute.ScanDialog.route)
+                },
             )
         }
 
