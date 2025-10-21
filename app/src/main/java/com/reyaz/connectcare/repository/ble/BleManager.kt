@@ -36,7 +36,7 @@ class BleManager(private val context: Context) {
      * [isScanning] indicates whether scanning is currently active.
      */
     fun scanNearbyBleDevices(
-        scanDuration: Long = 10_000L,
+        scanDuration: Long = 5_000L,
         onResult: (foundDevices: Result<List<BluetoothDevice>>, isScanning: Boolean) -> Unit
     ) {
         if (isScanning) return
@@ -146,6 +146,19 @@ class BleManager(private val context: Context) {
             if (newState == BluetoothProfile.STATE_CONNECTED) gatt.discoverServices()
         }
 
+        /**
+         * Callback triggered when the services of a connected GATT server have been discovered.
+         *
+         * This function is called after a successful `gatt.discoverServices()` call.
+         * It attempts to find the Heart Rate service and its corresponding characteristic.
+         * If found, it enables notifications for that characteristic so the app can receive
+         * real-time heart rate data from the peripheral device. This is done by writing
+         * `ENABLE_NOTIFICATION_VALUE` to the characteristic's Client Characteristic Configuration
+         * Descriptor (CCCD).
+         *
+         * @param gatt The GATT client.
+         * @param status [BluetoothGatt.GATT_SUCCESS] if the services were discovered successfully.
+         */
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             val characteristic = gatt.getService(heartRateServiceUuid)
                 ?.getCharacteristic(heartRateCharUuid)

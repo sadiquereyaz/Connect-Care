@@ -1,6 +1,7 @@
 package com.reyaz.connectcare.ui.screens.home.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,79 +32,103 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.reyaz.connectcare.R
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.IconButton
+import com.reyaz.connectcare.ui.screens.home.Service
 
 @Composable
 fun ParameterCardItem(
     modifier: Modifier = Modifier,
-    name: String,
+    service: Service,
     value: String,
-    unit: String,
-    icon: Int,
-    color: Color = Color(0xFF58B05C)
+    onClick: () -> Unit = {}
 ) {
     Card(
         modifier = modifier.height(150.dp),
-        elevation = CardDefaults.cardElevation(2.dp)
+        colors = CardDefaults.cardColors(containerColor = service.color.copy(alpha = 0.1f)),
+        elevation = CardDefaults.cardElevation(0.dp),
+        shape = RoundedCornerShape(32.dp),
+        onClick = onClick
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-        ) {
-            Row(
-                modifier = Modifier,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.Top
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.FavoriteBorder,
-                    contentDescription = null,
-                    tint = color,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(RoundedCornerShape(20))
-                        .background(color = color.copy(alpha = 0.2f))
-                        .padding(2.dp)
-                )
-                Text(text = name, style = MaterialTheme.typography.titleMedium, maxLines = 2)
-            }
-            Spacer(Modifier.height(4.dp))
-            Row(
-                verticalAlignment = Alignment.Bottom,
-                modifier = Modifier.padding(start = 36.dp)
-            ) {
-                Text(
-                    text = value,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 50.sp,
+        Box(Modifier.fillMaxSize()) {
 
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(service.color),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = service.icon),
+                            contentDescription = service.displayName,
+//                        tint = service.color,
+                            tint = Color(0xFFFFFFFF),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    Text(
+                        text = service.displayName,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 2,
+                        lineHeight = 18.sp,
+                        fontWeight = FontWeight.Bold
                     )
-                Text(
-                    text = unit,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(start = 6.dp, bottom = 2.dp),
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
-        }
+                }
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    modifier = Modifier
+                ) {
+                    Text(
+                        text = value,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 42.sp
+                    )
+                    Text(
+                        text = service.unit,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(start = 6.dp, bottom = 4.dp),
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
+            }
+            IconButton(
+                onClick = onClick,
+                modifier = Modifier.align(Alignment.BottomEnd)
+            ) { Icon(Icons.Default.Refresh, "refresh") }
+        }
     }
 }
+
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun ParameterCardItemPreview() {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.systemBarsPadding().padding(16.dp)
+        modifier = Modifier
+            .systemBarsPadding()
+            .padding(16.dp)
     ) {
         items(
             count = 4
         ) {
             ParameterCardItem(
-                name = "Heart Rate",
-                value = "72",
-                unit = "bpm",
-                icon = 0
+                value = "72", service = Service.BLOOD_PRESSURE
             )
         }
 

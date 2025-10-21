@@ -1,5 +1,6 @@
 package com.reyaz.connectcare.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -23,7 +24,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,22 +39,18 @@ import com.reyaz.connectcare.R
 @Composable
 fun AppLogo(
     modifier: Modifier = Modifier,
-
 ) {
     Box(
         modifier = modifier
-            .clip(
-                RoundedCornerShape(8.dp)
-            )
-            .background(MaterialTheme.colorScheme.primary)
-            .padding(4.dp),
+            .clip(CircleShape)
+            .background(Color(0xFFFF0000)),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            modifier = Modifier.size(28.dp),
-            imageVector = Icons.Outlined.FavoriteBorder,
+        Image(
+            modifier = Modifier.size(40.dp),
+            painter = painterResource(R.drawable.ic_logo),
+            colorFilter = ColorFilter.tint(Color.White),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onPrimary
         )
     }
 }
@@ -60,11 +62,11 @@ private fun AppLogoPreview() {
     Scaffold(
         topBar = {
             TopAppBar(
-                navigationIcon = { AppLogo(
-
-                    modifier = Modifier.padding(start = 8.dp)
-
-                ) },
+                navigationIcon = {
+                    AppLogo(
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                },
                 title = {
                     Column(
                         modifier = Modifier.padding(start = 8.dp)

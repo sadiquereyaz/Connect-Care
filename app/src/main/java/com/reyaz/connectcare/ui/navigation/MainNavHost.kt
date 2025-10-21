@@ -1,6 +1,6 @@
 package com.reyaz.connectcare.ui.navigation
 
-import android.util.Log
+import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,7 +10,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,13 +23,14 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import com.reyaz.connectcare.ui.screens.home.HomeScreen
 import com.reyaz.connectcare.ui.screens.home.HomeViewModel
+import com.reyaz.connectcare.ui.screens.home.IotDevice
 import com.reyaz.connectcare.ui.screens.scan_dialog.ScanDialog
 import com.reyaz.connectcare.ui.screens.scan_dialog.ScanViewModel
 import com.reyaz.connectcare.ui.screens.video_call.AgoraVideoScreen
 import com.reyaz.connectcare.utils.Constants
-import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
+@RequiresPermission("android.permission.BLUETOOTH_CONNECT")
 @Composable
 fun MainNavHost(
     modifier: Modifier = Modifier,
@@ -81,7 +81,7 @@ fun MainNavHost(
                 refresh = { viewModel.startScanning() },
                 onConnect = { device ->
                     val homeEntry = navController.getBackStackEntry(NavigationRoute.Home.route)
-                    homeEntry.savedStateHandle[Constants.SCAN_RESULT_KEY] = device.address
+                    homeEntry.savedStateHandle[Constants.SCAN_RESULT_KEY] = IotDevice(device.name, device.address)
                     navController.popBackStack()
                 }
             )
@@ -91,20 +91,18 @@ fun MainNavHost(
             route = NavigationRoute.Home.route
         ) { backStackEntry ->
 
-            val selectedMac by backStackEntry
+            val viewModel: HomeViewModel = koinViewModel()
+
+            val selectedDevice by backStackEntry
                 .savedStateHandle
-                .getStateFlow<String?>(Constants.SCAN_RESULT_KEY, null)
+                .getStateFlow<IotDevice?>(Constants.SCAN_RESULT_KEY, null)
                 .collectAsStateWithLifecycle()
 
-            val viewModel: HomeViewModel = koinViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-            LaunchedEffect(selectedMac) {
-//                Log.d("HomeScreen", "LaunchedEffect triggered with MAC: $selectedMac")
-                if (selectedMac != null) {
-//                    Log.d("HomeScreen", "Connecting to device: $selectedMac")
-                    viewModel.connectToDevice(selectedMac!!)
-                    // Clear the result after using it to avoid re-triggering
+            LaunchedEffect(selectedDevice) {
+                selectedDevice?.let{
+                    viewModel.setConnectedDevice(it)
                     backStackEntry.savedStateHandle.remove<String>(Constants.SCAN_RESULT_KEY)
                 }
             }
@@ -115,6 +113,8 @@ fun MainNavHost(
                 onStartScanClick = {
                     navController.navigate(NavigationRoute.ScanDialog.route)
                 },
+                observeHeartRate = { viewModel.observeHeartRate() },
+                onDisconnect = { viewModel.disconnectDevice() }
             )
         }
 

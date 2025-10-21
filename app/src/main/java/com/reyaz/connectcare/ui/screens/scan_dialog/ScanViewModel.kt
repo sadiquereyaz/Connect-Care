@@ -1,7 +1,6 @@
 package com.reyaz.connectcare.ui.screens.scan_dialog
 
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothDevice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.reyaz.connectcare.repository.ble.BleManager
@@ -24,7 +23,7 @@ class ScanViewModel(
 
     fun startScanning() {
         viewModelScope.launch {
-            bleManager.scanNearbyBleDevices(scanDuration = 10_000L) { scanResult, isScanning ->
+            bleManager.scanNearbyBleDevices(scanDuration = 2_000L) { scanResult, isScanning ->
                 scanResult.onSuccess { devices ->
                     _uiState.update {
                         it.copy(

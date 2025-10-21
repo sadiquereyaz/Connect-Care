@@ -8,6 +8,7 @@ import com.reyaz.connectcare.repository.ble.BleManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
@@ -18,34 +19,41 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    /**
-     * Connect directly to a BLE device using its MAC address.
-     * Emits heart rate updates to [uiState.heartRate].
-     */
-    fun connectToDevice(macAddress: String) {
-        Log.d("HomeViewModel", "Connecting to device with MAC: $macAddress")
-        _uiState.value = _uiState.value.copy(
-            isConnecting = true,
-            connectedDeviceMac = macAddress,
-            heartRate = null,
-            errorMessage = null
-        )
-
-        try {
-            bleManager.connectByAddress(macAddress) { heartRate ->
-                // Emit each heart rate update
-                viewModelScope.launch {
-                    _uiState.value = _uiState.value.copy(
-                        heartRate = heartRate,
-                        isConnecting = false
-                    )
-                }
+    fun setConnectedDevice(device: IotDevice) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(connectedDevice = device)
             }
-        } catch (e: Exception) {
+        }
+    }
+
+    fun observeHeartRate() {
+        viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
-                isConnecting = false,
-                errorMessage = e.message
+                isConnecting = true,
+                heartRate = null,
+                errorMessage = null
             )
+
+            try {
+                uiState.value.connectedDevice?.macAddress?.let { macAddress ->
+                    bleManager.connectByAddress(macAddress) { heartRate ->
+                        // Emit each heart rate update
+                        viewModelScope.launch {
+                            _uiState.value = _uiState.value.copy(
+                                heartRate = heartRate,
+                                isConnecting = false
+                            )
+                        }
+                    }
+                } ?: throw Exception("MAC address is null")
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Error connecting to device", e)
+                _uiState.value = _uiState.value.copy(
+                    isConnecting = false,
+                    errorMessage = e.message
+                )
+            }
         }
     }
 
@@ -56,8 +64,7 @@ class HomeViewModel(
         bleManager.disconnect()
         _uiState.value = _uiState.value.copy(
             isConnecting = false,
-            heartRate = null,
-            connectedDeviceMac = null
+            connectedDevice = null
         )
     }
 }

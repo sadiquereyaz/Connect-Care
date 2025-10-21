@@ -1,5 +1,6 @@
 package com.reyaz.connectcare.ui.screens.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -40,17 +42,20 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.reyaz.connectcare.R
 import com.reyaz.connectcare.ui.components.AppLogo
+import com.reyaz.connectcare.ui.screens.home.IotDevice
 import com.reyaz.connectcare.ui.screens.home.components.ConnectedDeviceItem
 import com.reyaz.connectcare.ui.screens.home.components.ParameterCardItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    modifier: Modifier = Modifier,
     uiState: HomeUiState,
     onAuthClick: () -> Unit,
     onStartCalling: () -> Unit,
     onStartScanClick: () -> Unit,
+    onDisconnect: () -> Unit,
+    observeHeartRate: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Scaffold(
         modifier = modifier,
@@ -82,131 +87,71 @@ fun HomeScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onStartCalling
-            ) {
-                Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
-                    AsyncImage(
-                        model = Icon(Icons.Default.Call, null),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .size(24.dp)
-                    )
-                }
+            FloatingActionButton(onClick = onStartCalling) {
+                Icon(Icons.Default.Call, contentDescription = null)
             }
         }
-    ) {
+    ) { padding ->
 
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
-                .padding(it)
-                .padding(16.dp)
-                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
+            // First Row
             item {
-                OutlinedButton(
-                    onClick = onStartScanClick,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(text = "Start Scan")
-                }
-            }
-            item {
-                Row(
-                ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     ParameterCardItem(
                         modifier = Modifier.weight(1f),
-                        name = "Heart Rate",
+                        service = Service.HEART_RATE,
                         value = uiState.heartRate?.toString() ?: "--",
-                        unit = "bpm",
-                        icon = 0
+                        onClick = observeHeartRate
                     )
-                    Spacer(Modifier.width(16.dp))
                     ParameterCardItem(
                         modifier = Modifier.weight(1f),
-                        name = "Body Temperature",
-                        value = uiState.heartRate?.toString() ?: "--",
-                        unit = "bpm",
-                        icon = 0
-                    )
-                }
-                Spacer(Modifier.height(16.dp))
-                Row() {
-                    ParameterCardItem(
-                        modifier = Modifier.weight(1f),
-                        name = "SpO2",
-                        value = uiState.heartRate?.toString() ?: "--",
-                        unit = "bpm",
-                        icon = 0
-                    )
-                    Spacer(Modifier.width(16.dp))
-                    ParameterCardItem(
-                        modifier = Modifier.weight(1f),
-                        name = "ECG",
-                        value = uiState.heartRate?.toString() ?: "--",
-                        unit = "bpm",
-                        icon = 0
+                        service = Service.THERMOMETER,
+                        value = uiState.bodyTemperature?.toString() ?: "--"
                     )
                 }
             }
 
+            // Second Row
             item {
-                Spacer(modifier = Modifier.height(4.dp))
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(
-                            width = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outline,
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    ParameterCardItem(
+                        modifier = Modifier.weight(1f),
+                        service = Service.SPO2,
+                        value = uiState.spo2?.toString() ?: "--"
+                    )
+                    ParameterCardItem(
+                        modifier = Modifier.weight(1f),
+                        service = Service.BLOOD_PRESSURE,
+                        value = uiState.bloodPressure?.let { "${it.first}/${it.second}" } ?: "--"
+                    )
+                }
+            }
 
-                        Text(text = "Supported Devices")
-
-                        Spacer(modifier = Modifier.height(2.dp))
-
-                        ConnectedDeviceItem(
-                            modifier = Modifier,
-                            name = "Galaxy Watch 4",
-                            isConnected = true,
-                            fetchedStatus = "Last Synced: 10:00 AM"
-                        )
-                        ConnectedDeviceItem(
-                            modifier = Modifier,
-                            name = "Galaxy Watch 4",
-                            isConnected = true,
-                            fetchedStatus = "Last Synced: 10:00 AM"
-                        )
-                        ConnectedDeviceItem(
-                            modifier = Modifier,
-                            name = "Galaxy Watch 4",
-                            isConnected = true,
-                            fetchedStatus = "Last Synced: 10:00 AM"
-                        )
-                        ConnectedDeviceItem(
-                            modifier = Modifier,
-                            name = "Galaxy Watch 4",
-                            isConnected = true,
-                            fetchedStatus = "Last Synced: 10:00 AM"
-                        )
+            // Connected Device
+            item {
+                ConnectedDeviceItem(
+                    name = uiState.connectedDevice?.name ?: "Not Connected",
+                    isConnected = uiState.connectedDevice != null,
+                    fetchedStatus = "Last Synced: 10:00 AM",
+                    onClick = {
+                        if (uiState.connectedDevice == null) {
+                            onStartScanClick()
+                        } else {
+                            onDisconnect()
+                        }
                     }
-                }
+                )
             }
-            item { Spacer(Modifier.height(100.dp)) }
-
         }
-
     }
 }
+
 
 @Preview
 @Composable
@@ -215,6 +160,8 @@ private fun HomeScreenPreview() {
         onAuthClick = {},
         onStartCalling = {},
         onStartScanClick = {},
-        uiState = HomeUiState()
+        uiState = HomeUiState(connectedDevice = IotDevice("Dummy Name", "ff:ad:32:2d:43")),
+        onDisconnect = { },
+        observeHeartRate = {},
     )
 }

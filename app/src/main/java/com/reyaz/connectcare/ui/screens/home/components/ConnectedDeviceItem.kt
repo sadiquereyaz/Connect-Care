@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,35 +41,37 @@ fun ConnectedDeviceItem(
     modifier: Modifier = Modifier,
     name: String,
     isConnected: Boolean,
-    fetchedStatus: String
+    fetchedStatus: String,
+    onClick: () -> Unit
 ) {
-        Row (
-            modifier = modifier
-                .clip(RoundedCornerShape(16.dp))
-                .background(color = MaterialTheme.colorScheme.background)
-                .padding(16.dp)
-        ){
-            Column {
-                Text(text = name, fontSize = 24.sp)
-                Row {
-                    if (isConnected) {
-                        Text(text = "Connected", fontSize = 12.sp)
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    Text(text = fetchedStatus, fontSize = 12.sp)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(color = MaterialTheme.colorScheme.background)
+            .padding(16.dp)
+    ) {
+        Column(Modifier.fillMaxWidth(0.6f)) {
+            Text(text = name, fontSize = 24.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row {
+                if (isConnected) {
+                    Text(text = "Connected", fontSize = 12.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
-            }
-            Spacer(
-                modifier = Modifier
-                    .weight(1f)
-            )
-            Button(
-                onClick = {}
-            ) {
-                val btnText = if (isConnected) "Sync" else "Connect"
-                Text(btnText)
+                Text(text = fetchedStatus, fontSize = 12.sp)
             }
         }
+        Spacer(
+            modifier = Modifier
+                .weight(1f)
+        )
+        Button(
+            onClick = onClick
+        ) {
+            val btnText = if (isConnected) "Disconnect" else "Connect"
+            Text(btnText)
+        }
+    }
 }
 
 @Preview(showBackground = true)
@@ -78,6 +81,6 @@ private fun ConnectedDeviceItemPreview() {
         modifier = Modifier,
         name = "Galaxy Watch 4",
         isConnected = true,
-        fetchedStatus = "Last Synced: 10:00 AM"
-    )
+        fetchedStatus = "Last Synced: 10:00 AM",
+    ) {}
 }
