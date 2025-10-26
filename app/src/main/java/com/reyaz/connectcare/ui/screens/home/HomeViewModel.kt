@@ -4,11 +4,11 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.reyaz.connectcare.domain.model.IotDevice
+import com.reyaz.connectcare.domain.model.Service
 import com.reyaz.connectcare.repository.ble.BleManager
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
@@ -20,51 +20,64 @@ class HomeViewModel(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     fun setConnectedDevice(device: IotDevice) {
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(connectedDevice = device)
+        _uiState.update { it.copy(connectedDevice = device) }
+    }
+
+    fun onErrorDismiss() {
+        _uiState.update { it.copy(errorMessage = null) }
+    }
+
+    fun onGetParameterClick(service: Service) {
+        when (service) {
+            Service.HEART_RATE -> observeParameter(Service.HEART_RATE) { hr ->
+                _uiState.update { it.copy(heartRate = hr) }
+            }
+
+            Service.SPO2 -> observeParameter(Service.SPO2) { spo2 ->
+                // TODO: add SPO2 field in HomeUiState
+                Log.d("BLE_DATA", "SpO2: $spo2")
+            }
+
+            Service.THERMOMETER -> observeParameter(Service.THERMOMETER) { temp ->
+                Log.d("BLE_DATA", "Temp: $temp")
+                _uiState.update { it.copy(bodyTemperature = temp.toFloat()) }
+            }
+
+            Service.BLOOD_PRESSURE -> observeParameter(Service.BLOOD_PRESSURE) { bp ->
+                // TODO: add BP field in HomeUiState
+                Log.d("BLE_DATA", "BP: $bp")
             }
         }
     }
 
-    fun observeHeartRate() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                isConnecting = true,
-                heartRate = null,
-                errorMessage = null
-            )
+    private fun observeParameter(service: Service, onResult: (Int) -> Unit) {
+        val mac = uiState.value.connectedDevice?.macAddress
+        if (mac.isNullOrEmpty()) {
+            _uiState.update { it.copy(errorMessage = "No device connected") }
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            _uiState.update { it.copy(isConnecting = true, errorMessage = null) }
 
             try {
-                uiState.value.connectedDevice?.macAddress?.let { macAddress ->
-                    bleManager.connectByAddress(macAddress) { heartRate ->
-                        // Emit each heart rate update
-                        viewModelScope.launch {
-                            _uiState.value = _uiState.value.copy(
-                                heartRate = heartRate,
-                                isConnecting = false
-                            )
-                        }
-                    }
-                } ?: throw Exception("MAC address is null")
+                bleManager.connectByAddress(service, mac) { result ->
+                    _uiState.update { it.copy(isConnecting = false) }
+                    onResult(result)
+                }
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "Error connecting to device", e)
-                _uiState.value = _uiState.value.copy(
-                    isConnecting = false,
-                    errorMessage = e.message
-                )
+                _uiState.update {
+                    it.copy(isConnecting = false, errorMessage = e.localizedMessage)
+                }
             }
         }
     }
 
-    /**
-     * Disconnect from the currently connected BLE device.
-     */
     fun disconnectDevice() {
         bleManager.disconnect()
-        _uiState.value = _uiState.value.copy(
-            isConnecting = false,
-            connectedDevice = null
-        )
+        _uiState.update {
+            it.copy(isConnecting = false, connectedDevice = null)
+        }
     }
 }

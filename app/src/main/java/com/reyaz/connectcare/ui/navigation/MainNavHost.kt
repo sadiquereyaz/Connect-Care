@@ -23,7 +23,7 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import com.reyaz.connectcare.ui.screens.home.HomeScreen
 import com.reyaz.connectcare.ui.screens.home.HomeViewModel
-import com.reyaz.connectcare.ui.screens.home.IotDevice
+import com.reyaz.connectcare.domain.model.IotDevice
 import com.reyaz.connectcare.ui.screens.scan_dialog.ScanDialog
 import com.reyaz.connectcare.ui.screens.scan_dialog.ScanViewModel
 import com.reyaz.connectcare.ui.screens.video_call.AgoraVideoScreen
@@ -81,7 +81,8 @@ fun MainNavHost(
                 refresh = { viewModel.startScanning() },
                 onConnect = { device ->
                     val homeEntry = navController.getBackStackEntry(NavigationRoute.Home.route)
-                    homeEntry.savedStateHandle[Constants.SCAN_RESULT_KEY] = IotDevice(device.name, device.address)
+                    homeEntry.savedStateHandle[Constants.SCAN_RESULT_KEY] =
+                        IotDevice(device.name, device.address)
                     navController.popBackStack()
                 }
             )
@@ -101,7 +102,7 @@ fun MainNavHost(
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
             LaunchedEffect(selectedDevice) {
-                selectedDevice?.let{
+                selectedDevice?.let {
                     viewModel.setConnectedDevice(it)
                     backStackEntry.savedStateHandle.remove<String>(Constants.SCAN_RESULT_KEY)
                 }
@@ -113,8 +114,9 @@ fun MainNavHost(
                 onStartScanClick = {
                     navController.navigate(NavigationRoute.ScanDialog.route)
                 },
-                observeHeartRate = { viewModel.observeHeartRate() },
-                onDisconnect = { viewModel.disconnectDevice() }
+                observeParameter = { service -> viewModel.onGetParameterClick(service) },
+                onDisconnect = { viewModel.disconnectDevice() },
+                onErrorDismiss = { viewModel.onErrorDismiss() },
             )
         }
 

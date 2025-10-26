@@ -9,6 +9,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.reyaz.connectcare.domain.model.Service
 import java.util.UUID
 
 @SuppressLint("MissingPermission")
@@ -24,9 +25,10 @@ class BleManager(private val context: Context) {
      *
      * Think of it like an address or ID that tells your Android app what kind of data or capability the ESP32 is offering.
      */
-    private val heartRateServiceUuid = UUID.fromString("0000180D-0000-1000-8000-00805f9b34fb")
+    private val heartRateServiceUuid = Service.HEART_RATE.serviceUuid
     private val heartRateCharUuid = UUID.fromString("00002A37-0000-1000-8000-00805f9b34fb")
-    private val cccdUuid = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")  // Client Characteristics Configured UUID
+    private val cccdUuid =
+        UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")  // Client Characteristics Configured UUID
 
     private var isScanning = false
     private var currentScanCallback: ScanCallback? = null
@@ -101,90 +103,67 @@ class BleManager(private val context: Context) {
     }
 
     /**
-     * Scan for a device by name and connect automatically when found.
+     * Connect directly to a device by MAC address (no scan required).
      */
-    fun scanAndConnect(deviceName: String, onData: (Int) -> Unit) {
-        if (isScanning) return
-        val scanner = bluetoothAdapter.bluetoothLeScanner ?: return
-        isScanning = true
+    fun connectByAddress(serviceType: Service, macAddress: String, onData: (Int) -> Unit) {
+        val device = bluetoothAdapter.getRemoteDevice(macAddress)
+        gatt = device.connectGatt(context, false, gattCallback(serviceType, onData))
+    }
 
-        val callback = object : ScanCallback() {
-            override fun onScanResult(callbackType: Int, result: ScanResult) {
-                val name = result.device.name ?: return
-                Log.d("BleManager", "Found device: $name")
-                if (name.contains(deviceName, true)) {
-                    stopScan()
-                    gatt = result.device.connectGatt(context, false, gattCallback(onData))
+
+    /** Common GATT callback for heart rate notifications */
+    private fun gattCallback(serviceType: Service, onData: (Int) -> Unit) =
+        object : BluetoothGattCallback() {
+
+            override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    gatt.discoverServices()
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    Log.d("BLE_MANAGER", "Disconnected from device")
                 }
             }
 
-            override fun onScanFailed(errorCode: Int) {
-                stopScan()
-                Log.e("BleManager", "Scan failed: $errorCode")
+            override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    Log.e("BLE_MANAGER", "Service discovery failed with status: $status")
+                    return
+                }
+                Log.d("BLE_MANAGER", "Services discovered successfully.")
+                val service = gatt.getService(serviceType.serviceUuid)
+                val characteristic = service?.getCharacteristic(serviceType.characteristicUuid)
+
+                characteristic?.let {
+                    Log.d("BLE_MANAGER", "Found characteristic: ${it.uuid}")
+                    gatt.setCharacteristicNotification(it, true)
+                    val descriptor = it.getDescriptor(serviceType.descriptorUuid)
+                    descriptor?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                    descriptor?.let { desc ->
+                        Log.d("BLE_MANAGER", "Writing descriptor to enable notifications.")
+                        gatt.writeDescriptor(desc) }
+                }
+            }
+
+            override fun onCharacteristicChanged(
+                gatt: BluetoothGatt,
+                characteristic: BluetoothGattCharacteristic
+            ) {
+                Log.d("BLE_MANAGER", "Characteristic changed: ${characteristic.uuid}")
+                if (characteristic.uuid == serviceType.characteristicUuid) {
+                    val flag = characteristic.value[0].toInt()
+                    Log.d("BLE_MANAGER_DATA", "Flag: $flag")
+                    val format = if (flag and 0x01 != 0)
+                        BluetoothGattCharacteristic.FORMAT_UINT16
+                    else
+                        BluetoothGattCharacteristic.FORMAT_UINT8
+                    Log.d("BLE_MANAGER_DATA", "Format: ${if (format == BluetoothGattCharacteristic.FORMAT_UINT16) "UINT16" else "UINT8"}")
+
+                    val value = characteristic.getIntValue(format, 1)
+                    Log.d("BLE_MANAGER_DATA", "${serviceType.name} value: $value ${serviceType.unit}")
+                    onData(value)
+                }
             }
         }
 
-        currentScanCallback = callback
-        val settings = ScanSettings.Builder()
-            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-            .build()
-        scanner.startScan(null, settings, callback)
-    }
-
-    /**
-     * Connect directly to a device by MAC address (no scan required).
-     */
-    fun connectByAddress(macAddress: String, onData: (Int) -> Unit) {
-        val device = bluetoothAdapter.getRemoteDevice(macAddress)
-        gatt = device.connectGatt(context, false, gattCallback(onData))
-    }
-
-    /** Common GATT callback for heart rate notifications */
-    private fun gattCallback(onData: (Int) -> Unit) = object : BluetoothGattCallback() {
-
-        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            if (newState == BluetoothProfile.STATE_CONNECTED) gatt.discoverServices()
-        }
-
-        /**
-         * Callback triggered when the services of a connected GATT server have been discovered.
-         *
-         * This function is called after a successful `gatt.discoverServices()` call.
-         * It attempts to find the Heart Rate service and its corresponding characteristic.
-         * If found, it enables notifications for that characteristic so the app can receive
-         * real-time heart rate data from the peripheral device. This is done by writing
-         * `ENABLE_NOTIFICATION_VALUE` to the characteristic's Client Characteristic Configuration
-         * Descriptor (CCCD).
-         *
-         * @param gatt The GATT client.
-         * @param status [BluetoothGatt.GATT_SUCCESS] if the services were discovered successfully.
-         */
-        override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-            val characteristic = gatt.getService(heartRateServiceUuid)
-                ?.getCharacteristic(heartRateCharUuid)
-            characteristic?.let {
-                gatt.setCharacteristicNotification(it, true)
-                val descriptor = it.getDescriptor(cccdUuid)
-                descriptor?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                descriptor?.let { gatt.writeDescriptor(it) }
-            }
-        }
-
-        override fun onCharacteristicChanged(
-            gatt: BluetoothGatt,
-            characteristic: BluetoothGattCharacteristic
-        ) {
-            if (characteristic.uuid == heartRateCharUuid) {
-                val flag = characteristic.value[0].toInt()
-                val format = if (flag and 0x01 != 0)
-                    BluetoothGattCharacteristic.FORMAT_UINT16
-                else
-                    BluetoothGattCharacteristic.FORMAT_UINT8
-                val heartRate = characteristic.getIntValue(format, 1)
-                onData(heartRate)
-            }
-        }
-    }
 
     /** Disconnect current GATT connection */
     fun disconnect() {

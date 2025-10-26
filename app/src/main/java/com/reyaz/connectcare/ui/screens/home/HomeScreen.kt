@@ -1,38 +1,27 @@
 package com.reyaz.connectcare.ui.screens.home
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
@@ -41,9 +30,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.reyaz.connectcare.R
+import com.reyaz.connectcare.domain.model.IotDevice
+import com.reyaz.connectcare.domain.model.Service
 import com.reyaz.connectcare.ui.components.AppLogo
-import com.reyaz.connectcare.ui.screens.home.IotDevice
-import com.reyaz.connectcare.ui.screens.home.components.ConnectedDeviceItem
+import com.reyaz.connectcare.ui.screens.home.components.ConnectionRow
 import com.reyaz.connectcare.ui.screens.home.components.ParameterCardItem
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,7 +44,8 @@ fun HomeScreen(
     onStartCalling: () -> Unit,
     onStartScanClick: () -> Unit,
     onDisconnect: () -> Unit,
-    observeHeartRate: () -> Unit,
+    onErrorDismiss: () -> Unit,
+    observeParameter: (Service) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -90,9 +81,33 @@ fun HomeScreen(
             FloatingActionButton(onClick = onStartCalling) {
                 Icon(Icons.Default.Call, contentDescription = null)
             }
+        },
+        snackbarHost = {
+            uiState.errorMessage?.let {
+                Snackbar(
+                    modifier = Modifier.padding(16.dp),
+                    action = {},
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    dismissAction = {
+                        IconButton(
+                            onErrorDismiss
+                        ){
+                            Icon(
+                                Icons.Default.Close,
+                                "cross",
+                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier
+//                                    .padding(end = 8.dp)
+                            )
+                        }
+                    },
+                ) {
+                    Text(text = it)
+                }
+            }
         }
     ) { padding ->
-
         LazyColumn(
             modifier = Modifier
                 .padding(padding)
@@ -107,12 +122,13 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f),
                         service = Service.HEART_RATE,
                         value = uiState.heartRate?.toString() ?: "--",
-                        onClick = observeHeartRate
+                        onClick = { observeParameter(Service.HEART_RATE) }
                     )
                     ParameterCardItem(
                         modifier = Modifier.weight(1f),
                         service = Service.THERMOMETER,
-                        value = uiState.bodyTemperature?.toString() ?: "--"
+                        value = uiState.bodyTemperature?.toString() ?: "--",
+                        onClick = { observeParameter(Service.THERMOMETER) }
                     )
                 }
             }
@@ -135,17 +151,23 @@ fun HomeScreen(
 
             // Connected Device
             item {
-                ConnectedDeviceItem(
+                ConnectionRow(
                     name = uiState.connectedDevice?.name ?: "Not Connected",
                     isConnected = uiState.connectedDevice != null,
                     fetchedStatus = "Last Synced: 10:00 AM",
                     onClick = {
+                        // todo: check if bluetooth is on
                         if (uiState.connectedDevice == null) {
                             onStartScanClick()
                         } else {
                             onDisconnect()
                         }
                     }
+                )
+                HorizontalDivider(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp)
                 )
             }
         }
@@ -162,6 +184,7 @@ private fun HomeScreenPreview() {
         onStartScanClick = {},
         uiState = HomeUiState(connectedDevice = IotDevice("Dummy Name", "ff:ad:32:2d:43")),
         onDisconnect = { },
-        observeHeartRate = {},
+        observeParameter = {},
+        onErrorDismiss = {},
     )
 }
